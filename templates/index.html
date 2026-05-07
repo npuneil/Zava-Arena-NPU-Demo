@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zava Arena — On-Device AI for Live Events</title>
+<style>
+  :root {
+    --bg-0: #06060d;
+    --bg-1: #0d0d1a;
+    --bg-2: #14142b;
+    --bg-3: #1d1d3a;
+    --panel: rgba(20, 20, 43, 0.85);
+    --border: rgba(0, 229, 255, 0.18);
+    --border-strong: rgba(0, 229, 255, 0.45);
+    --cyan: #00e5ff;
+    --magenta: #ff00c8;
+    --purple: #8a2be2;
+    --text: #e8e8ff;
+    --text-dim: #9999bb;
+    --success: #00ffa3;
+    --warn: #ffb84d;
+    --danger: #ff4d6d;
+    --grad: linear-gradient(135deg, #00e5ff 0%, #ff00c8 100%);
+    --grad-dim: linear-gradient(135deg, rgba(0,229,255,.15) 0%, rgba(255,0,200,.15) 100%);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: radial-gradient(ellipse at top, #14142b 0%, #06060d 60%);
+    color: var(--text);
+    font-family: "Segoe UI", Roboto, system-ui, sans-serif;
+    min-height: 100vh;
+  }
+
+  /* ============ Header ============ */
+  header {
+    background: linear-gradient(180deg, rgba(13,13,26,.95), rgba(6,6,13,.7));
+    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .brand { display: flex; align-items: center; gap: 1rem; }
+  .arena-logo {
+    width: 48px; height: 48px;
+    background: var(--grad);
+    border-radius: 50%;
+    box-shadow: 0 0 24px rgba(0,229,255,.5), 0 0 48px rgba(255,0,200,.3);
+    position: relative;
+  }
+  .arena-logo::after {
+    content: ""; position: absolute; inset: 6px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.4), transparent 60%);
+  }
+  .brand h1 {
+    font-size: 1.4rem; font-weight: 700; letter-spacing: .02em;
+    background: var(--grad);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .brand .sub { font-size: .75rem; color: var(--text-dim); letter-spacing: .15em; text-transform: uppercase; }
+
+  .status-pill {
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .4rem .9rem;
+    background: rgba(0, 255, 163, .1);
+    border: 1px solid rgba(0, 255, 163, .35);
+    border-radius: 999px;
+    font-size: .8rem;
+    color: var(--success);
+  }
+  .status-pill .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 8px var(--success);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 50% { opacity: .4; } }
+
+  /* ============ Tabs ============ */
+  .tabs {
+    display: flex; gap: .25rem;
+    padding: 0 2rem;
+    background: rgba(13,13,26,.6);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 1rem 1.5rem;
+    background: none; border: none; color: var(--text-dim);
+    font-size: .9rem; font-weight: 600; cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all .2s;
+    white-space: nowrap;
+  }
+  .tab:hover { color: var(--cyan); }
+  .tab.active {
+    color: var(--cyan);
+    border-bottom-color: var(--cyan);
+    text-shadow: 0 0 12px rgba(0,229,255,.6);
+  }
+
+  /* ============ Layout ============ */
+  main { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn .3s; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  h2.page-title {
+    font-size: 1.8rem; margin-bottom: .5rem;
+    background: var(--grad);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  p.page-sub { color: var(--text-dim); margin-bottom: 2rem; }
+
+  /* ============ Cards ============ */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+  }
+  .grid { display: grid; gap: 1rem; }
+  .grid-3 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .grid-4 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
+  .feature-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.75rem;
+    transition: all .25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .feature-card::before {
+    content: ""; position: absolute; inset: 0;
+    background: var(--grad-dim);
+    opacity: 0; transition: opacity .25s;
+  }
+  .feature-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--border-strong);
+    box-shadow: 0 8px 32px rgba(0,229,255,.15);
+  }
+  .feature-card:hover::before { opacity: 1; }
+  .feature-card > * { position: relative; z-index: 1; }
+  .feature-card .icon { font-size: 2rem; margin-bottom: .75rem; }
+  .feature-card h3 {
+    font-size: 1.1rem; margin-bottom: .5rem;
+    color: var(--cyan);
+  }
+  .feature-card p { color: var(--text-dim); font-size: .9rem; line-height: 1.5; }
+
+  /* ============ Hero ============ */
+  .hero {
+    text-align: center;
+    padding: 3rem 2rem;
+    margin-bottom: 2rem;
+    background:
+      radial-gradient(ellipse at center, rgba(0,229,255,.08), transparent 70%),
+      var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: ""; position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,0,200,.12), transparent 60%);
+    top: -200px; right: -200px;
+    pointer-events: none;
+  }
+  .hero h2 {
+    font-size: 2.6rem;
+    background: var(--grad);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1rem;
+    position: relative; z-index: 1;
+  }
+  .hero p {
+    font-size: 1.05rem; color: var(--text-dim);
+    max-width: 680px; margin: 0 auto;
+    position: relative; z-index: 1;
+  }
+
+  .stats { display: flex; gap: 1rem; flex-wrap: wrap; margin: 2rem 0; }
+  .stat {
+    flex: 1; min-width: 180px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    text-align: center;
+  }
+  .stat .num {
+    font-size: 1.8rem; font-weight: 700;
+    background: var(--grad);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .stat .lbl { color: var(--text-dim); font-size: .8rem; text-transform: uppercase; letter-spacing: .1em; margin-top: .25rem; }
+
+  /* ============ Chat ============ */
+  .chat-wrap { display: grid; gap: 1rem; }
+  .chat-box {
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    height: 420px;
+    overflow-y: auto;
+    display: flex; flex-direction: column; gap: .75rem;
+  }
+  .msg {
+    padding: .85rem 1rem;
+    border-radius: 12px;
+    max-width: 85%;
+    line-height: 1.5;
+    font-size: .92rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .msg.user {
+    align-self: flex-end;
+    background: var(--grad);
+    color: #06060d;
+    font-weight: 500;
+  }
+  .msg.ai {
+    align-self: flex-start;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .msg.thinking { color: var(--text-dim); font-style: italic; }
+  .msg-meta {
+    font-size: .7rem; color: var(--text-dim);
+    margin-top: .4rem;
+    display: flex; gap: .75rem;
+  }
+  .msg-meta .badge {
+    background: rgba(0,229,255,.12);
+    color: var(--cyan);
+    padding: .15rem .5rem; border-radius: 4px;
+    border: 1px solid rgba(0,229,255,.3);
+  }
+
+  .chat-input { display: flex; gap: .5rem; }
+  .chat-input input, .chat-input textarea {
+    flex: 1; padding: .85rem 1rem;
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: .95rem;
+    font-family: inherit;
+    resize: none;
+  }
+  .chat-input input:focus, .chat-input textarea:focus {
+    outline: none; border-color: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(0,229,255,.15);
+  }
+
+  .btn {
+    padding: .85rem 1.5rem;
+    background: var(--grad);
+    color: #06060d;
+    border: none; border-radius: 10px;
+    font-weight: 700; cursor: pointer;
+    font-size: .9rem;
+    transition: all .15s;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,229,255,.35); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .btn.ghost {
+    background: transparent;
+    color: var(--cyan);
+    border: 1px solid var(--border-strong);
+  }
+  .btn.ghost:hover { background: rgba(0,229,255,.08); box-shadow: none; }
+
+  .quick-prompts { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .quick-prompts .chip {
+    padding: .5rem .9rem;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-dim);
+    font-size: .82rem;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .quick-prompts .chip:hover {
+    color: var(--cyan); border-color: var(--cyan);
+  }
+
+  /* ============ Ops / Doc Analyzer ============ */
+  textarea.doc {
+    width: 100%; min-height: 220px;
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    padding: 1rem;
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: .88rem;
+    resize: vertical;
+  }
+  textarea.doc:focus { outline: none; border-color: var(--cyan); }
+
+  /* Ops sample-scene gallery */
+  .ops-samples { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .6rem; }
+  .ops-sample {
+    background: rgba(13,13,26,.6);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: .35rem;
+    cursor: pointer;
+    transition: all .15s;
+    display: flex; flex-direction: column; gap: .35rem;
+  }
+  .ops-sample:hover { border-color: var(--border-strong); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,229,255,.12); }
+  .ops-sample.active { border-color: var(--magenta); box-shadow: 0 0 0 1px var(--magenta), 0 4px 20px rgba(255,0,200,.25); }
+  .ops-sample img { width: 100%; border-radius: 6px; display: block; }
+  .ops-sample .label { font-size: .72rem; color: var(--text); text-align: center; line-height: 1.25; padding: 0 .25rem .15rem; }
+  #ops-voice-btn.recording { background: rgba(255,77,109,.15) !important; border-color: var(--danger) !important; color: var(--danger) !important; animation: voicePulse 1.2s infinite; }
+  #cap-voice-btn.recording, #ho-voice-btn.recording { background: rgba(255,77,109,.15) !important; border-color: var(--danger) !important; color: var(--danger) !important; animation: voicePulse 1.2s infinite; }
+  /* Captions language pills */
+  .cap-lang {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .35rem .7rem; border-radius: 999px;
+    background: rgba(13,13,26,.6); border: 1px solid var(--border);
+    cursor: pointer; font-size: .82rem; transition: all .15s;
+    user-select: none;
+  }
+  .cap-lang:hover { border-color: var(--border-strong); }
+  .cap-lang.on { background: rgba(0,229,255,.12); border-color: var(--cyan); color: var(--cyan); }
+  .cap-lang input { display: none; }
+  @keyframes voicePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,77,109,.5); } 50% { box-shadow: 0 0 0 8px rgba(255,77,109,0); } }
+  .task-pills { display: flex; gap: .5rem; flex-wrap: wrap; margin: 1rem 0; }
+  .task-pills label {
+    padding: .55rem 1rem;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: .85rem;
+    color: var(--text-dim);
+    transition: all .15s;
+  }
+  .task-pills input[type=radio] { display: none; }
+  .task-pills input:checked + label,
+  .task-pills label:has(input:checked) {
+    background: var(--grad);
+    color: #06060d; border-color: transparent;
+    font-weight: 600;
+  }
+
+  .result {
+    margin-top: 1.25rem; padding: 1.25rem;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    white-space: pre-wrap;
+    line-height: 1.6;
+    min-height: 120px;
+  }
+
+  /* ============ Detector ============ */
+  .mode-switch { display: flex; gap: .5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .mode-switch button {
+    padding: .7rem 1.25rem;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-dim);
+    cursor: pointer; font-weight: 600; font-size: .88rem;
+    transition: all .15s;
+  }
+  .mode-switch button.active {
+    background: var(--grad); color: #06060d; border-color: transparent;
+  }
+  .file-drop {
+    padding: 2.5rem; text-align: center;
+    border: 2px dashed var(--border-strong);
+    border-radius: 12px;
+    background: var(--bg-1);
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .file-drop:hover { background: rgba(0,229,255,.05); border-color: var(--cyan); }
+  .file-drop input { display: none; }
+  .verdict {
+    margin-top: 1rem; padding: 1rem 1.25rem;
+    border-radius: 10px;
+    font-weight: 600;
+    border: 1px solid;
+  }
+  .verdict.real { background: rgba(0,255,163,.08); color: var(--success); border-color: rgba(0,255,163,.35); }
+  .verdict.ai { background: rgba(255,77,109,.08); color: var(--danger); border-color: rgba(255,77,109,.35); }
+  .verdict.unsure { background: rgba(255,184,77,.08); color: var(--warn); border-color: rgba(255,184,77,.35); }
+  .conf-bar { height: 8px; background: var(--bg-1); border-radius: 4px; margin-top: .75rem; overflow: hidden; }
+  .conf-bar > div { height: 100%; background: var(--grad); transition: width .5s; }
+
+  /* ============ Dashboard ============ */
+  .metric-grid {
+    display: grid; gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    margin-bottom: 2rem;
+  }
+  .metric {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+  }
+  .metric .lbl { color: var(--text-dim); font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; }
+  .metric .val {
+    font-size: 1.8rem; font-weight: 700;
+    margin-top: .5rem;
+    background: var(--grad);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .log-table {
+    width: 100%; border-collapse: collapse;
+    font-size: .85rem;
+  }
+  .log-table th, .log-table td {
+    padding: .6rem .75rem; text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .log-table th { color: var(--cyan); font-weight: 600; font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; }
+  .log-table td { color: var(--text-dim); }
+
+  .info-row { display: flex; justify-content: space-between; padding: .5rem 0; border-bottom: 1px solid var(--border); }
+  .info-row:last-child { border-bottom: none; }
+  .info-row .k { color: var(--text-dim); }
+  .info-row .v { color: var(--cyan); font-weight: 600; font-family: "SF Mono", Consolas, monospace; }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg-1); }
+  ::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="arena-logo"></div>
+    <div>
+      <h1>Zava Arena</h1>
+      <div class="sub">On-Device AI · Live Events</div>
+    </div>
+  </div>
+  <div class="status-pill" id="statusPill">
+    <span class="dot"></span>
+    <span id="statusText">Booting NPU…</span>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="home">🏟️  Home</button>
+  <button class="tab" data-tab="concierge">🎟️  Concertgoer</button>
+  <button class="tab" data-tab="performer">🎤  Performer Coach</button>
+  <button class="tab" data-tab="captions">🌐  Live Captions</button>
+  <button class="tab" data-tab="ops">🛠️  Operations</button>
+  <button class="tab" data-tab="handover">🪧  Shift Handover</button>
+  <button class="tab" data-tab="detector">🔍  Content Authenticity</button>
+  <button class="tab" data-tab="dashboard">📊  NPU Dashboard</button>
+</nav>
+
+<main>
+
+<!-- =================== HOME =================== -->
+<section class="page active" id="home">
+  <div class="hero">
+    <h2>AI that scales to 17,600 fans — without leaving the building.</h2>
+    <p>Every persona at Zava Arena — from the fan in row Z to the front-of-house engineer — gets a private, low-latency AI assistant running entirely on Copilot+ PC NPUs. No cloud round-trips. No data exfil. Sub-second answers for the millions of micro-interactions a live event generates.</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="num">17,600</div><div class="lbl">Seats per show</div></div>
+    <div class="stat"><div class="num">6</div><div class="lbl">Personas powered</div></div>
+    <div class="stat"><div class="num">12</div><div class="lbl">Caption languages</div></div>
+    <div class="stat"><div class="num">100%</div><div class="lbl">On-device inference</div></div>
+  </div>
+
+  <h3 style="color: var(--cyan); margin: 2rem 0 1rem;">Personas powered on-device</h3>
+  <div class="grid grid-3">
+    <div class="feature-card">
+      <div class="icon">🎟️</div>
+      <h3>Concertgoer Concierge</h3>
+      <p>Wayfinding, set lists, accessibility services, food, rideshare zones. Runs on the kiosk NPU — every fan question answered in &lt;1 second, even when 17K phones overload the cell network.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🌐</div>
+      <h3>Live Captions in 12 Languages</h3>
+      <p>Translate artist banter into Spanish, Mandarin, Japanese, and more — projected to seat-back screens or fan phones with zero cell-network dependency. The cloud can't keep up with comedy timing; the NPU can.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🎤</div>
+      <h3>Performer Coach</h3>
+      <p>Backstage AI for the artist: vocal warmups, energy-arc setlist tuning, between-song banter, in-ear monitor tips, crowd-vibe reads.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🛠️</div>
+      <h3>Operations Playbook</h3>
+      <p>Front-of-house AI that turns a one-line incident report into a full response playbook — severity, comms tree, mitigation, post-event follow-up.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🪧</div>
+      <h3>Crew Shift Handover</h3>
+      <p>Outgoing supervisor dictates a 30-second voice memo in the elevator; the AI writes a structured brief for the incoming team. Medical incidents and PII never leave the venue.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🔍</div>
+      <h3>Content Authenticity</h3>
+      <p>Real-time AI-vs-human detection on text, images, and video clips — protect the venue's brand from deepfakes and scam tickets without sending media to the cloud.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">⚡</div>
+      <h3>Works in Airplane Mode</h3>
+      <p>Disconnect your network. Everything still works. A packed arena means cell coverage collapses to zero — your AI shouldn't depend on a tower that just got drowned by 17,600 phones.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">📊</div>
+      <h3>NPU Dashboard</h3>
+      <p>Live silicon telemetry — tokens/sec, energy per query, cumulative cloud-cost saved per show. Prove the ROI of on-device AI in real time.</p>
+    </div>
+  </div>
+</section>
+
+<!-- =================== CONCIERGE =================== -->
+<section class="page" id="concierge">
+  <h2 class="page-title">🎟️ Concertgoer Concierge</h2>
+  <p class="page-sub">Fan-facing AI for set lists, wayfinding, accessibility, and the arena experience. Running on the kiosk NPU — privacy-preserving, instant, offline.</p>
+
+  <div class="card">
+    <div class="quick-prompts">
+      <div class="chip" onclick="ask('concierge', 'Where is the closest restroom to section 204?')">🚻 Closest restroom</div>
+      <div class="chip" onclick="ask('concierge', 'I have a hearing aid — what accessibility services does Zava Arena offer tonight?')">♿ Accessibility</div>
+      <div class="chip" onclick="ask('concierge', 'What food is available inside the venue and what are the wait times like?')">🍔 Food options</div>
+      <div class="chip" onclick="ask('concierge', 'Where do I get picked up by my rideshare after the show?')">🚗 Rideshare pickup</div>
+      <div class="chip" onclick="ask('concierge', 'Tell me about the resident headliner at Zava Arena — what makes their show special?')">🎵 Show trivia</div>
+    </div>
+    <div class="chat-box" id="chat-concierge"></div>
+    <div class="chat-input">
+      <input id="input-concierge" type="text" placeholder="Ask about your seat, the show, accessibility, food…" onkeypress="if(event.key==='Enter') send('concierge')">
+      <button class="btn" onclick="send('concierge')">Send</button>
+    </div>
+  </div>
+</section>
+
+<!-- =================== PERFORMER =================== -->
+<section class="page" id="performer">
+  <h2 class="page-title">🎤 Performer Coach</h2>
+  <p class="page-sub">Backstage AI for touring artists. Vocal craft, energy pacing, crowd reading, and arena-specific staging tips — all running on the artist's Surface NPU.</p>
+
+  <div class="card">
+    <div class="quick-prompts">
+      <div class="chip" onclick="ask('performer', 'Give me a 5-minute vocal warmup before a 90-minute set — I sing alto rock.')">🎶 5-min warmup</div>
+      <div class="chip" onclick="ask('performer', 'How should I sequence my setlist for an energy arc that peaks at song 9 of 14?')">📈 Setlist arc</div>
+      <div class="chip" onclick="ask('performer', 'What are some between-song banter ideas that work in a 17K-seat immersive venue?')">🎙️ Banter ideas</div>
+      <div class="chip" onclick="ask('performer', 'How do I use the main LED wall to enhance a slow ballad without overwhelming it?')">🌌 Use the LED wall</div>
+      <div class="chip" onclick="ask('performer', 'My in-ears feel tinny tonight — what should I check before I go on?')">🎧 In-ear triage</div>
+    </div>
+    <div class="chat-box" id="chat-performer"></div>
+    <div class="chat-input">
+      <input id="input-performer" type="text" placeholder="Ask about warmups, setlists, staging, in-ears…" onkeypress="if(event.key==='Enter') send('performer')">
+      <button class="btn" onclick="send('performer')">Send</button>
+    </div>
+  </div>
+</section>
+
+<!-- =================== CAPTIONS =================== -->
+<section class="page" id="captions">
+  <h2 class="page-title">🌐 Live Captions in 12 Languages</h2>
+  <p class="page-sub">Speak — or type — and the on-device AI translates into Spanish, Mandarin, Japanese, and more, instantly. No cell tower, no cloud round-trip. The same model that runs the Performer Coach now feeds every seat-back screen and fan-phone PWA.</p>
+
+  <div class="card">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <div style="display:flex;flex-direction:column;gap:.5rem">
+        <div style="color:var(--text-dim);font-size:.85rem;letter-spacing:.05em;text-transform:uppercase">Source line (English)</div>
+        <button class="btn" id="cap-voice-btn" type="button" style="background:rgba(0,229,255,.1);border:1px solid var(--border-strong);color:var(--cyan)">🎤 Hold to dictate</button>
+        <div id="cap-voice-status" style="font-size:.8rem;color:var(--text-dim);min-height:1.1rem"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.5rem">
+        <div style="color:var(--text-dim);font-size:.85rem;letter-spacing:.05em;text-transform:uppercase">Target languages</div>
+        <div id="cap-lang-pills" class="task-pills" style="margin:0"></div>
+      </div>
+    </div>
+
+    <textarea class="doc" id="cap-text" placeholder="Paste or dictate the artist's line in English. Try: 'Hey everyone, you're loud tonight! How's everyone in row Z holding up?'"></textarea>
+
+    <div class="quick-prompts" style="margin-top:.75rem">
+      <div class="chip" onclick="loadCapSample(0)">🎤 Crowd hype</div>
+      <div class="chip" onclick="loadCapSample(1)">🙏 Thank you</div>
+      <div class="chip" onclick="loadCapSample(2)">🎶 Setlist intro</div>
+      <div class="chip" onclick="loadCapSample(3)">⚠ Safety announcement</div>
+    </div>
+
+    <button class="btn" style="margin-top:1rem" onclick="runCaptions()">Translate on NPU</button>
+    <div id="cap-meta" style="font-size:.8rem;color:var(--text-dim);margin-top:.5rem"></div>
+
+    <div id="cap-grid" class="grid grid-3" style="margin-top:1.25rem"></div>
+  </div>
+</section>
+
+<!-- =================== OPS =================== -->
+<section class="page" id="ops">
+  <h2 class="page-title">🛠️ Operations Playbook</h2>
+  <p class="page-sub">Drop a stadium photo, dictate by voice, or paste a briefing. The on-device AI returns a structured playbook for venue staff — no cloud round-trip, no exposed PII.</p>
+
+  <div class="card">
+    <!-- Sample stadium scenarios -->
+    <div style="margin-bottom:1rem">
+      <div style="color:var(--text-dim);font-size:.85rem;margin-bottom:.5rem;letter-spacing:.05em;text-transform:uppercase">Sample stadium scenes — click to load</div>
+      <div class="ops-samples" id="ops-samples"></div>
+    </div>
+
+    <!-- Photo dropzone -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <label class="file-drop" id="ops-drop" style="margin:0">
+        <input type="file" id="ops-image-file" accept="image/*">
+        <img id="ops-preview" alt="" style="display:none;max-width:100%;max-height:140px;border-radius:8px;margin-bottom:.5rem">
+        <div id="ops-drop-text">
+          <div style="font-size:1.6rem;margin-bottom:.4rem">📷</div>
+          <div>Drop a venue photo</div>
+          <div style="color:var(--text-dim);font-size:.8rem;margin-top:.25rem">Stays on this device · NPU-analyzed</div>
+        </div>
+      </label>
+      <div style="display:flex;flex-direction:column;gap:.5rem">
+        <div style="color:var(--text-dim);font-size:.85rem;letter-spacing:.05em;text-transform:uppercase">Voice notes</div>
+        <button class="btn" id="ops-voice-btn" type="button" style="background:rgba(0,229,255,.1);border:1px solid var(--border-strong);color:var(--cyan)">🎤 Hold to dictate</button>
+        <div id="ops-voice-status" style="font-size:.8rem;color:var(--text-dim);min-height:1.1rem"></div>
+        <div style="font-size:.75rem;color:var(--text-dim);line-height:1.4">Uses Windows on-device speech recognition. Audio never leaves your machine.</div>
+      </div>
+    </div>
+
+    <textarea class="doc" id="ops-text" placeholder="Paste briefing here, dictate above, or click a sample scene…
+Example: 'Fan in section 312 reports feeling unwell during pre-show. Visible distress, accompanied by friend. Show begins in 12 minutes.'"></textarea>
+
+    <div class="task-pills">
+      <label><input type="radio" name="ops-task" value="playbook" checked> 📋 Incident Playbook</label>
+      <label><input type="radio" name="ops-task" value="crowd"> 👥 Crowd Flow</label>
+      <label><input type="radio" name="ops-task" value="equipment"> 🔧 Equipment Triage</label>
+    </div>
+
+    <button class="btn" onclick="runOps()">Generate Playbook</button>
+    <div class="result" id="ops-result">Output will appear here…</div>
+  </div>
+</section>
+
+<!-- =================== HANDOVER =================== -->
+<section class="page" id="handover">
+  <h2 class="page-title">🪧 Crew Shift Handover</h2>
+  <p class="page-sub">Outgoing supervisor dictates a 30-second voice memo in the elevator between shifts; the on-device AI writes a structured brief for the incoming team. Medical incidents, ejections, and talent issues never leave the venue.</p>
+
+  <div class="card">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <div style="display:flex;flex-direction:column;gap:.5rem">
+        <div style="color:var(--text-dim);font-size:.85rem;letter-spacing:.05em;text-transform:uppercase">Outgoing role</div>
+        <select id="ho-role" class="doc" style="padding:.6rem;font-size:.95rem">
+          <option>Floor Supervisor</option>
+          <option>Front-of-House Lead</option>
+          <option>Security Captain</option>
+          <option>Medical Lead</option>
+          <option>Production Manager</option>
+          <option>Box Office Lead</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.5rem">
+        <div style="color:var(--text-dim);font-size:.85rem;letter-spacing:.05em;text-transform:uppercase">Voice memo</div>
+        <button class="btn" id="ho-voice-btn" type="button" style="background:rgba(0,229,255,.1);border:1px solid var(--border-strong);color:var(--cyan)">🎤 Hold to dictate</button>
+        <div id="ho-voice-status" style="font-size:.8rem;color:var(--text-dim);min-height:1.1rem"></div>
+      </div>
+    </div>
+
+    <div style="color:var(--text-dim);font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;margin-bottom:.4rem">Memo (typed or dictated)</div>
+    <textarea class="doc" id="ho-memo" placeholder="Speak or type. Example: 'Smooth pre-show. We had one med in 204 — fan recovered, walked out under his own power, no transport. Gate B is still on a single scanner so queues are heavy. Talent is happy with monitors. Watch the LED dropout in zone 7 — vendor flagged it'"></textarea>
+
+    <div style="color:var(--text-dim);font-size:.85rem;letter-spacing:.05em;text-transform:uppercase;margin:1rem 0 .4rem">Optional incident log</div>
+    <textarea class="doc" id="ho-log" style="min-height:90px" placeholder="Paste raw incident lines (one per row). Example:
+19:42 — Sec 204 Row 12 medical, refused transport
+20:18 — Gate B scanner #2 offline
+20:30 — LED zone 7 tile dropout, vendor pinged"></textarea>
+
+    <div class="quick-prompts" style="margin-top:.75rem">
+      <div class="chip" onclick="loadHoSample(0)">🩺 Medical-heavy night</div>
+      <div class="chip" onclick="loadHoSample(1)">🚪 Doors-late chaos</div>
+      <div class="chip" onclick="loadHoSample(2)">🎤 Talent-side issues</div>
+    </div>
+
+    <button class="btn" style="margin-top:1rem" onclick="runHandover()">Generate Handover Brief</button>
+    <div class="result" id="ho-result">Brief will appear here…</div>
+  </div>
+</section>
+
+<!-- =================== DETECTOR =================== -->
+<section class="page" id="detector">
+  <h2 class="page-title">🔍 Content Authenticity Detector</h2>
+  <p class="page-sub">Detect AI-generated text, images, and video clips on the NPU. Zero upload, zero exposure — protect Zava Arena's brand from deepfakes, scam tickets, and synthetic media in real time.</p>
+
+  <div class="card">
+    <div class="mode-switch">
+      <button class="active" data-mode="text">📝 Text</button>
+      <button data-mode="image">🖼️ Image</button>
+      <button data-mode="video">🎬 Video</button>
+    </div>
+
+    <!-- Text -->
+    <div id="det-text" class="det-pane">
+      <textarea class="doc" id="det-text-input" placeholder="Paste text — a press release, social caption, scalper email, anything…"></textarea>
+      <button class="btn" style="margin-top:.75rem" onclick="detectText()">Analyze on NPU</button>
+    </div>
+
+    <!-- Image -->
+    <div id="det-image" class="det-pane" style="display:none">
+      <label class="file-drop">
+        <input type="file" id="det-image-file" accept="image/*">
+        <div style="font-size:2rem;margin-bottom:.5rem">🖼️</div>
+        <div>Click or drop an image</div>
+        <div style="color:var(--text-dim);font-size:.85rem;margin-top:.25rem">Stays on this device</div>
+      </label>
+      <div id="det-image-name" style="margin-top:.75rem;color:var(--text-dim);font-size:.85rem"></div>
+      <button class="btn" style="margin-top:.75rem" onclick="detectImage()">Analyze on NPU</button>
+    </div>
+
+    <!-- Video -->
+    <div id="det-video" class="det-pane" style="display:none">
+      <label class="file-drop">
+        <input type="file" id="det-video-file" accept="video/*">
+        <div style="font-size:2rem;margin-bottom:.5rem">🎬</div>
+        <div>Click or drop a video clip</div>
+        <div style="color:var(--text-dim);font-size:.85rem;margin-top:.25rem">Frame-by-frame analysis · stays local</div>
+      </label>
+      <div id="det-video-name" style="margin-top:.75rem;color:var(--text-dim);font-size:.85rem"></div>
+      <button class="btn" style="margin-top:.75rem" onclick="detectVideo()">Analyze on NPU</button>
+    </div>
+
+    <div id="det-result" class="result" style="margin-top:1.25rem">Verdict will appear here…</div>
+  </div>
+</section>
+
+<!-- =================== DASHBOARD =================== -->
+<section class="page" id="dashboard">
+  <h2 class="page-title">📊 NPU Dashboard</h2>
+  <p class="page-sub">Live telemetry from on-device AI. Every query proves: faster, cheaper, more private than the cloud.</p>
+
+  <div id="fallback-note" style="display:none; margin-bottom:1.5rem; padding:.85rem 1.25rem; border-radius:10px; background:rgba(255,184,77,.08); border:1px solid rgba(255,184,77,.35); color:var(--warn); font-size:.9rem;"></div>
+
+  <div class="metric-grid">
+    <div class="metric"><div class="lbl">Total Inferences</div><div class="val" id="m-count">0</div></div>
+    <div class="metric"><div class="lbl">Tokens Generated</div><div class="val" id="m-tokens">0</div></div>
+    <div class="metric"><div class="lbl">Avg Latency</div><div class="val" id="m-latency">0 ms</div></div>
+    <div class="metric"><div class="lbl">Cloud Cost Avoided</div><div class="val" id="m-cost">$0.00</div></div>
+  </div>
+
+  <div class="grid grid-3" style="margin-bottom:2rem">
+    <div class="card">
+      <h3 style="color:var(--cyan);margin-bottom:1rem">⚡ Silicon</h3>
+      <div class="info-row"><span class="k">Hardware</span><span class="v" id="i-hw">—</span></div>
+      <div class="info-row"><span class="k">Runtime</span><span class="v" id="i-runtime">—</span></div>
+      <div class="info-row"><span class="k">Model</span><span class="v" id="i-model">—</span></div>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--cyan);margin-bottom:1rem">🔒 Privacy</h3>
+      <div class="info-row"><span class="k">Data leaves device</span><span class="v" style="color:var(--success)">Never</span></div>
+      <div class="info-row"><span class="k">Network required</span><span class="v" style="color:var(--success)">No</span></div>
+      <div class="info-row"><span class="k">Tenant isolation</span><span class="v" style="color:var(--success)">Per-device</span></div>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--cyan);margin-bottom:1rem">🌐 Resilience</h3>
+      <div class="info-row"><span class="k">Cell tower outage</span><span class="v" style="color:var(--success)">OK</span></div>
+      <div class="info-row"><span class="k">Wi-Fi congestion</span><span class="v" style="color:var(--success)">OK</span></div>
+      <div class="info-row"><span class="k">Cloud incident</span><span class="v" style="color:var(--success)">OK</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="color:var(--cyan);margin-bottom:1rem">📜 Recent Inferences</h3>
+    <table class="log-table" id="log-table">
+      <thead><tr><th>Time</th><th>Persona</th><th>Tokens</th><th>Latency</th><th>Cloud $ Saved</th></tr></thead>
+      <tbody id="log-body"><tr><td colspan="5" style="text-align:center;padding:2rem">No inferences yet — try a tab above.</td></tr></tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ---------- Tabs ----------
+document.querySelectorAll('.tab').forEach(t => {
+  t.onclick = () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.tab).classList.add('active');
+    if (t.dataset.tab === 'dashboard') refreshDashboard();
+  };
+});
+
+// ---------- Status ----------
+async function refreshStatus() {
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    const pill = document.getElementById('statusPill');
+    const txt = document.getElementById('statusText');
+    const dot = pill.querySelector('.dot');
+
+    if (d.ready) {
+      const hw = d.hardware || 'NPU';
+      txt.textContent = `${hw} · ${d.model || 'Foundry Local'} · ${d.runtime || ''}`.trim();
+      // Green for NPU, cyan for GPU, amber for CPU
+      let color = 'var(--success)';
+      let bg = 'rgba(0,255,163,.1)';
+      let bd = 'rgba(0,255,163,.35)';
+      if (hw === 'GPU') { color = 'var(--cyan)'; bg = 'rgba(0,229,255,.1)'; bd = 'rgba(0,229,255,.35)'; }
+      else if (hw === 'CPU') { color = 'var(--warn)'; bg = 'rgba(255,184,77,.1)'; bd = 'rgba(255,184,77,.35)'; }
+      pill.style.background = bg;
+      pill.style.borderColor = bd;
+      pill.style.color = color;
+      dot.style.background = color;
+      dot.style.boxShadow = `0 0 8px ${color}`;
+      pill.title = d.fallback_reason || `Running on-device on ${hw}`;
+    } else {
+      txt.textContent = d.message || 'NPU initializing…';
+      pill.style.background = 'rgba(255,184,77,.1)';
+      pill.style.borderColor = 'rgba(255,184,77,.35)';
+      pill.style.color = 'var(--warn)';
+      dot.style.background = 'var(--warn)';
+      dot.style.boxShadow = '0 0 8px var(--warn)';
+    }
+    if (d.hardware) document.getElementById('i-hw').textContent = d.hardware;
+    if (d.runtime) document.getElementById('i-runtime').textContent = d.runtime;
+    if (d.model) document.getElementById('i-model').textContent = d.model;
+
+    // Surface NPU→GPU fallback notice on the dashboard
+    const note = document.getElementById('fallback-note');
+    if (note) {
+      if (d.fallback_reason) {
+        note.style.display = 'block';
+        note.textContent = '⚠ ' + d.fallback_reason;
+      } else {
+        note.style.display = 'none';
+      }
+    }
+  } catch (e) { /* keep booting state */ }
+}
+refreshStatus();
+setInterval(refreshStatus, 5000);
+
+// ---------- Chat ----------
+function ask(persona, prompt) {
+  document.getElementById('input-' + persona).value = prompt;
+  send(persona);
+}
+
+async function send(persona) {
+  const input = document.getElementById('input-' + persona);
+  const box = document.getElementById('chat-' + persona);
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  const um = document.createElement('div');
+  um.className = 'msg user';
+  um.textContent = msg;
+  box.appendChild(um);
+
+  const tm = document.createElement('div');
+  tm.className = 'msg ai thinking';
+  tm.textContent = '⚡ Thinking on the NPU…';
+  box.appendChild(tm);
+  box.scrollTop = box.scrollHeight;
+
+  try {
+    const r = await fetch('/api/' + persona, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({message: msg})
+    });
+    const d = await r.json();
+    tm.classList.remove('thinking');
+    if (d.error) {
+      tm.textContent = '⚠ ' + d.error;
+      tm.style.color = 'var(--danger)';
+    } else {
+      tm.textContent = d.response || '(empty)';
+      const meta = document.createElement('div');
+      meta.className = 'msg-meta';
+      meta.innerHTML = `<span class="badge">${d.hardware || 'NPU'}</span><span>${d.latency_ms}ms</span><span>${d.tokens} tok</span><span>saved ${d.cloud_cost_saved}</span>`;
+      tm.appendChild(meta);
+    }
+  } catch (e) {
+    tm.classList.remove('thinking');
+    tm.textContent = '⚠ Network error';
+    tm.style.color = 'var(--danger)';
+  }
+  box.scrollTop = box.scrollHeight;
+}
+
+// ---------- Ops ----------
+const OPS_SAMPLES = [
+  {
+    id: 'medical-bowl',
+    img: '/static/img/ops-samples/medical-bowl.svg',
+    label: 'Medical · Section 204',
+    task: 'playbook',
+    scene: 'Photo shows a fan slumped forward in seat 204-12-8 of the lower bowl, visibly pale, with a companion in the adjacent seat waving for attention. Pre-show, doors are open, house lights still up. Section is two-thirds filled.',
+    notes: 'T-12 minutes to show start. Companion says fan complained of dizziness and chest tightness. No prior medical flag on ticket. Nearest aisle is 6 seats over.'
+  },
+  {
+    id: 'crowd-surge',
+    img: '/static/img/ops-samples/crowd-surge.svg',
+    label: 'Bottleneck · Gate B',
+    task: 'crowd',
+    scene: 'Photo shows a heavy crowd compressing toward Gate B serving Section 312. Dozens of patrons backed up against the gate frame, no forward movement, a few people on tiptoe trying to see. Doors opened 4 minutes ago.',
+    notes: 'Only 1 of 3 ticket scanners is online at Gate B. Adjacent Gates A and C are running at half capacity. Estimated 600 patrons in the queue, growing.'
+  },
+  {
+    id: 'led-panel-out',
+    img: '/static/img/ops-samples/led-panel-out.svg',
+    label: 'LED dropout · Zone 7',
+    task: 'equipment',
+    scene: 'Photo shows the main arena LED wall with an 8-tile dark cluster (tiles 312–319) in Zone 7. Surrounding tiles render normally. Console reports "SIGNAL LOSS" on that tile range only. Doors open in 35 minutes.',
+    notes: 'Issue began 2 minutes ago, no power event on the panel-feed UPS. Last firmware push was 6 days ago. Zone 7 backup feed has not been tested this week.'
+  },
+  {
+    id: 'spilled-stairwell',
+    img: '/static/img/ops-samples/spilled-stairwell.svg',
+    label: 'Slip hazard · Stairwell S-4',
+    task: 'playbook',
+    scene: 'Photo shows a spilled drink (appears to be a sugary cocktail) pooled across two steps of stairwell S-4 on the 200-level concourse. A plastic cup is on its side at the edge. Intermission begins in 3 minutes — egress wave imminent.',
+    notes: 'No staff currently posted at S-4. Adjacent stairwells S-3 and S-5 are open. Cleaning closet is one concourse loop away. No patron has reported it yet.'
+  },
+  {
+    id: 'concession-queue',
+    img: '/static/img/ops-samples/concession-queue.svg',
+    label: 'Queue spike · Bar W-14',
+    task: 'crowd',
+    scene: 'Photo shows the West concourse during intermission. Bar W-14 has a 16-deep queue snaking back into the concourse walking lane. Bars W-12 and W-16 on either side have queues of only 2–3 patrons. Act II resumes in 8 minutes.',
+    notes: 'Bar W-14 currently has the only working frozen-drink machine on the West side. POS is healthy at all three. No staff shortage reported.'
+  }
+];
+
+let opsAttachedImage = null;   // {filename, url} or null
+let opsActiveSample = null;    // sample id or null
+
+function renderOpsSamples() {
+  const root = document.getElementById('ops-samples');
+  if (!root) return;
+  root.innerHTML = OPS_SAMPLES.map(s => `
+    <div class="ops-sample" data-id="${s.id}" onclick="loadOpsSample('${s.id}')">
+      <img src="${s.img}" alt="${s.label}">
+      <div class="label">${s.label}</div>
+    </div>
+  `).join('');
+}
+
+function loadOpsSample(id) {
+  const s = OPS_SAMPLES.find(x => x.id === id);
+  if (!s) return;
+  opsActiveSample = id;
+  opsAttachedImage = { filename: s.id + '.svg', url: s.img, scene: s.scene, sample: true };
+  document.querySelectorAll('.ops-sample').forEach(el => el.classList.toggle('active', el.dataset.id === id));
+  // preview swap
+  const prev = document.getElementById('ops-preview');
+  const dropText = document.getElementById('ops-drop-text');
+  prev.src = s.img;
+  prev.style.display = 'block';
+  if (dropText) dropText.style.display = 'none';
+  // pre-fill notes & task
+  const radio = document.querySelector(`input[name="ops-task"][value="${s.task}"]`);
+  if (radio) radio.checked = true;
+  document.getElementById('ops-text').value = s.notes;
+}
+
+document.getElementById('ops-image-file').addEventListener('change', async (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const fd = new FormData();
+  fd.append('file', f);
+  document.getElementById('ops-result').textContent = 'Uploading photo…';
+  try {
+    const r = await fetch('/api/upload-ops-image', { method: 'POST', body: fd });
+    const d = await r.json();
+    if (d.error) { document.getElementById('ops-result').textContent = '⚠ ' + d.error; return; }
+    opsAttachedImage = { filename: d.filename, url: d.url, sample: false };
+    opsActiveSample = null;
+    document.querySelectorAll('.ops-sample').forEach(el => el.classList.remove('active'));
+    const prev = document.getElementById('ops-preview');
+    prev.src = d.url;
+    prev.style.display = 'block';
+    document.getElementById('ops-drop-text').style.display = 'none';
+    document.getElementById('ops-result').textContent = 'Photo attached. Add notes or dictate, then Generate Playbook.';
+  } catch (err) {
+    document.getElementById('ops-result').textContent = '⚠ Upload failed: ' + err.message;
+  }
+});
+
+// ---- Voice dictation (on-device via Windows Web Speech API) ----
+function wireVoice(btnId, statusId, targetId) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = document.getElementById(btnId);
+  const status = document.getElementById(statusId);
+  if (!btn) return;
+  if (!SR) {
+    btn.disabled = true;
+    btn.textContent = '🎤 Voice not supported';
+    if (status) status.textContent = 'Open in Edge or Chrome on Windows for on-device speech.';
+    return;
+  }
+  const recog = new SR();
+  recog.continuous = true;
+  recog.interimResults = true;
+  recog.lang = 'en-US';
+  let active = false;
+  let baseText = '';
+  recog.onresult = (ev) => {
+    let interim = '', final = '';
+    for (let i = ev.resultIndex; i < ev.results.length; i++) {
+      const r = ev.results[i];
+      if (r.isFinal) final += r[0].transcript;
+      else interim += r[0].transcript;
+    }
+    if (final) baseText = (baseText + ' ' + final).trim();
+    const ta = document.getElementById(targetId);
+    if (ta) ta.value = (baseText + (interim ? ' ' + interim : '')).trim();
+  };
+  recog.onerror = (e) => { if (status) status.textContent = '⚠ ' + (e.error || 'speech error'); stopV(); };
+  recog.onend = () => { if (active) { try { recog.start(); } catch(_){} } };
+  const startV = () => {
+    const ta = document.getElementById(targetId);
+    baseText = ta ? ta.value.trim() : '';
+    active = true;
+    btn.classList.add('recording');
+    btn.textContent = '🔴 Listening — release to stop';
+    if (status) status.textContent = 'On-device speech recognition active.';
+    try { recog.start(); } catch(_) {}
+  };
+  const stopV = () => {
+    active = false;
+    btn.classList.remove('recording');
+    btn.textContent = '🎤 Hold to dictate';
+    if (status) status.textContent = '';
+    try { recog.stop(); } catch(_) {}
+  };
+  btn.addEventListener('mousedown', startV);
+  btn.addEventListener('mouseup', stopV);
+  btn.addEventListener('mouseleave', () => { if (active) stopV(); });
+  btn.addEventListener('touchstart', (e) => { e.preventDefault(); startV(); });
+  btn.addEventListener('touchend', (e) => { e.preventDefault(); stopV(); });
+}
+
+renderOpsSamples();
+wireVoice('ops-voice-btn', 'ops-voice-status', 'ops-text');
+wireVoice('cap-voice-btn', 'cap-voice-status', 'cap-text');
+wireVoice('ho-voice-btn', 'ho-voice-status', 'ho-memo');
+renderCapLangs();
+
+async function runOps() {
+  const text = document.getElementById('ops-text').value.trim();
+  const task = document.querySelector('input[name="ops-task"]:checked').value;
+  const out = document.getElementById('ops-result');
+  if (!text && !opsAttachedImage) { out.textContent = 'Add a briefing, dictate notes, or pick a sample scene first.'; return; }
+  out.textContent = '⚡ Generating playbook on the NPU…';
+  const body = { text, task };
+  if (opsAttachedImage) {
+    body.image_url = opsAttachedImage.url;
+    body.image_filename = opsAttachedImage.filename;
+    if (opsAttachedImage.scene) body.scene = opsAttachedImage.scene;
+  }
+  try {
+    const r = await fetch('/api/ops', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (d.error) { out.textContent = '⚠ ' + d.error; return; }
+    out.textContent = d.response;
+  } catch (e) { out.textContent = '⚠ ' + e.message; }
+}
+
+// ---------- Live Captions ----------
+const CAP_LANGS = {
+  es: 'Spanish 🇪🇸', pt: 'Portuguese 🇧🇷', fr: 'French 🇫🇷',
+  de: 'German 🇩🇪', zh: 'Mandarin 🇨🇳', ja: 'Japanese 🇯🇵',
+  ko: 'Korean 🇰🇷', hi: 'Hindi 🇮🇳', ar: 'Arabic 🇸🇦',
+  it: 'Italian 🇮🇹', ru: 'Russian 🇷🇺', tl: 'Tagalog 🇵🇭'
+};
+const CAP_DEFAULT = ['es','pt','fr','de','zh','ja'];
+const CAP_SAMPLES = [
+  "Hey everyone, you're loud tonight! How's everyone in row Z holding up?",
+  "Thank you. Thank you for showing up — for letting us be a part of your night.",
+  "This next one I wrote at 3 AM in a hotel room three blocks from here.",
+  "Quick safety note — if you need a medic, just wave to a staffer in a yellow vest. They'll get you out fast."
+];
+let capSelected = new Set(CAP_DEFAULT);
+
+function renderCapLangs() {
+  const root = document.getElementById('cap-lang-pills');
+  if (!root) return;
+  root.innerHTML = Object.entries(CAP_LANGS).map(([code,label]) => `
+    <label data-code="${code}" class="cap-lang ${capSelected.has(code)?'on':''}">
+      <input type="checkbox" ${capSelected.has(code)?'checked':''}> ${label}
+    </label>`).join('');
+  root.querySelectorAll('label').forEach(l => {
+    l.addEventListener('click', (e) => {
+      e.preventDefault();
+      const c = l.dataset.code;
+      if (capSelected.has(c)) capSelected.delete(c); else capSelected.add(c);
+      l.classList.toggle('on');
+      const cb = l.querySelector('input'); if (cb) cb.checked = capSelected.has(c);
+    });
+  });
+}
+function loadCapSample(i) {
+  const ta = document.getElementById('cap-text');
+  if (ta) ta.value = CAP_SAMPLES[i] || '';
+}
+async function runCaptions() {
+  const text = document.getElementById('cap-text').value.trim();
+  const grid = document.getElementById('cap-grid');
+  const meta = document.getElementById('cap-meta');
+  if (!text) { meta.textContent = '⚠ Speak or type an English line first.'; return; }
+  if (capSelected.size === 0) { meta.textContent = '⚠ Pick at least one target language.'; return; }
+  meta.textContent = '⚡ Translating on the NPU…';
+  grid.innerHTML = '';
+  try {
+    const r = await fetch('/api/captions', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ text, langs: Array.from(capSelected) })
+    });
+    const d = await r.json();
+    if (d.error) { meta.textContent = '⚠ ' + d.error; return; }
+    const trans = d.translations || {};
+    const labels = d.labels || {};
+    const codes = Array.from(capSelected);
+    grid.innerHTML = codes.map(c => {
+      const v = trans[c];
+      return `
+        <div class="feature-card" style="cursor:default">
+          <div style="font-size:.75rem;color:var(--text-dim);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.4rem">${CAP_LANGS[c] || labels[c] || c}</div>
+          <div style="font-size:1rem;line-height:1.45;color:var(--text)">${v ? escapeHtml(v) : '<span style="color:var(--warn)">(model returned no translation — try again)</span>'}</div>
+        </div>`;
+    }).join('');
+    const got = Object.keys(trans).length;
+    meta.textContent = `${got}/${codes.length} translations · ${d.hardware || ''} · ${d.latency_ms || 0}ms · ${d.tokens || 0} tokens`;
+    if (got === 0 && d.raw_response) {
+      grid.innerHTML += `<div class="feature-card" style="grid-column:1/-1"><div style="font-size:.75rem;color:var(--warn);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.4rem">Raw model output (JSON parse failed)</div><pre style="white-space:pre-wrap;color:var(--text-dim);font-size:.85rem">${escapeHtml(d.raw_response)}</pre></div>`;
+    }
+  } catch (e) { meta.textContent = '⚠ ' + e.message; }
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+// ---------- Crew Shift Handover ----------
+const HO_SAMPLES = [
+  {
+    role: 'Floor Supervisor',
+    memo: "Pre-show was rough — three medicals before the lights even dropped. Two were dehydration, fans recovered with water and AC. Third was a fan in 312 who had a panic attack, transported by EMS, family followed. Gates A and C running smooth, Gate B is on one scanner so queue's been heavy all night. Talent took the stage on time. Comms tree is clean.",
+    log: "18:55 — Sec 207 dehydration, refused transport\n19:10 — Sec 144 dehydration, refused transport\n19:24 — Sec 312 panic attack, EMS transport, family with patient\n19:38 — Gate B scanner #2 offline, vendor pinged"
+  },
+  {
+    role: 'Front-of-House Lead',
+    memo: "Doors went late by 14 minutes — IT had a badge-system reboot we didn't see coming. Once we opened, ingest was hot, no major bottlenecks. We comped two patrons whose tickets bounced at scan; tickets office is following up. House lights cue went on time but the main arena LED had a 90-second flicker in zone 3 during the openers — production says it's a known firmware bug, vendor flying out a fix tomorrow.",
+    log: "19:04 — Doors HOLD (badge reboot)\n19:18 — Doors OPEN\n19:21 — 2x ticket bounce, comp issued\n20:02 — Arena LED zone 3 flicker, ~90s, recovered"
+  },
+  {
+    role: 'Production Manager',
+    memo: "Talent's mood is good but tight. Lead vocalist asked for a different in-ear mix at soundcheck — monitor world swapped to mix 3, she's happy now. The opener's drummer is favoring his right wrist, may need to flag medical for tomorrow. We've got a sponsor activation in the green room at 10:30 — keep that area sealed off until then. Pyro is GO for the encore, three cues, last one extended by 0.5 seconds per the artist.",
+    log: "16:30 — Soundcheck, monitor mix 3 promoted\n17:05 — Opener drum kit reset\n21:10 — Pyro safety walk, all GO\n22:30 — Sponsor activation, green room"
+  }
+];
+function loadHoSample(i) {
+  const s = HO_SAMPLES[i]; if (!s) return;
+  document.getElementById('ho-role').value = s.role;
+  document.getElementById('ho-memo').value = s.memo;
+  document.getElementById('ho-log').value = s.log || '';
+}
+async function runHandover() {
+  const memo = document.getElementById('ho-memo').value.trim();
+  const log = document.getElementById('ho-log').value.trim();
+  const role = document.getElementById('ho-role').value;
+  const out = document.getElementById('ho-result');
+  if (!memo && !log) { out.textContent = '⚠ Dictate a memo or paste an incident log first.'; return; }
+  out.textContent = '⚡ Generating handover brief on the NPU…';
+  try {
+    const r = await fetch('/api/handover', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ memo, log, shift_role: role })
+    });
+    const d = await r.json();
+    if (d.error) { out.textContent = '⚠ ' + d.error; return; }
+    out.textContent = d.response || '(empty)';
+  } catch (e) { out.textContent = '⚠ ' + e.message; }
+}
+
+// ---------- Detector ----------
+document.querySelectorAll('.mode-switch button').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('.mode-switch button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    document.querySelectorAll('.det-pane').forEach(p => p.style.display = 'none');
+    document.getElementById('det-' + b.dataset.mode).style.display = 'block';
+    document.getElementById('det-result').innerHTML = 'Verdict will appear here…';
+  };
+});
+
+document.getElementById('det-image-file').onchange = e => {
+  const f = e.target.files[0];
+  document.getElementById('det-image-name').textContent = f ? `Selected: ${f.name} (${(f.size/1024).toFixed(0)} KB)` : '';
+};
+document.getElementById('det-video-file').onchange = e => {
+  const f = e.target.files[0];
+  document.getElementById('det-video-name').textContent = f ? `Selected: ${f.name} (${(f.size/1024/1024).toFixed(1)} MB)` : '';
+};
+
+function renderVerdict(d) {
+  const out = document.getElementById('det-result');
+  if (d.error) { out.innerHTML = `<div class="verdict ai">⚠ ${d.error}</div>`; return; }
+  const v = (d.verdict || '').toLowerCase();
+  let cls = 'unsure';
+  if (v.includes('human') || v.includes('real') || v.includes('authentic')) cls = 'real';
+  else if (v.includes('ai') || v.includes('synth') || v.includes('generated') || v.includes('fake')) cls = 'ai';
+  const conf = d.confidence != null ? Math.round(d.confidence * 100) : null;
+  out.innerHTML = `
+    <div class="verdict ${cls}">
+      Verdict: ${d.verdict || 'Unknown'}
+      ${conf != null ? `<div class="conf-bar"><div style="width:${conf}%"></div></div>
+        <div style="font-size:.85rem;margin-top:.4rem;color:var(--text-dim)">Confidence: ${conf}%</div>` : ''}
+    </div>
+    ${d.details ? `<div style="margin-top:1rem;color:var(--text-dim);font-size:.9rem">${d.details}</div>` : ''}
+    <div style="margin-top:.75rem;font-size:.8rem;color:var(--text-dim)">
+      ⚡ ${d.latency_ms || '?'} ms · ${d.provider || 'NPU'} · stayed on-device
+    </div>`;
+}
+
+async function detectText() {
+  const text = document.getElementById('det-text-input').value.trim();
+  if (!text) { document.getElementById('det-result').textContent = 'Paste some text first.'; return; }
+  document.getElementById('det-result').textContent = '⚡ Analyzing on the NPU…';
+  try {
+    const r = await fetch('/api/detector/text', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({text})
+    });
+    renderVerdict(await r.json());
+  } catch (e) { document.getElementById('det-result').textContent = '⚠ ' + e.message; }
+}
+
+async function detectImage() {
+  const f = document.getElementById('det-image-file').files[0];
+  if (!f) { document.getElementById('det-result').textContent = 'Choose an image first.'; return; }
+  document.getElementById('det-result').textContent = '⚡ Analyzing on the NPU…';
+  const fd = new FormData(); fd.append('file', f);
+  try {
+    const r = await fetch('/api/detector/image', { method: 'POST', body: fd });
+    renderVerdict(await r.json());
+  } catch (e) { document.getElementById('det-result').textContent = '⚠ ' + e.message; }
+}
+
+async function detectVideo() {
+  const f = document.getElementById('det-video-file').files[0];
+  if (!f) { document.getElementById('det-result').textContent = 'Choose a video first.'; return; }
+  document.getElementById('det-result').textContent = '⚡ Analyzing frames on the NPU…';
+  const fd = new FormData(); fd.append('file', f);
+  try {
+    const r = await fetch('/api/detector/video', { method: 'POST', body: fd });
+    renderVerdict(await r.json());
+  } catch (e) { document.getElementById('det-result').textContent = '⚠ ' + e.message; }
+}
+
+// ---------- Dashboard ----------
+async function refreshDashboard() {
+  try {
+    const r = await fetch('/api/metrics');
+    const d = await r.json();
+    document.getElementById('m-count').textContent = d.total_inferences;
+    document.getElementById('m-tokens').textContent = d.total_tokens.toLocaleString();
+    document.getElementById('m-latency').textContent = d.avg_latency_ms + ' ms';
+    document.getElementById('m-cost').textContent = d.total_cloud_cost_saved;
+    const body = document.getElementById('log-body');
+    if (!d.log || !d.log.length) {
+      body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem">No inferences yet — try a tab above.</td></tr>';
+    } else {
+      body.innerHTML = d.log.slice().reverse().map(e =>
+        `<tr><td>${e.timestamp || '—'}</td><td>${e.endpoint || '—'}</td><td>${e.tokens}</td><td>${e.latency_ms} ms</td><td>${e.cloud_cost_saved}</td></tr>`
+      ).join('');
+    }
+  } catch (e) { /* ignore */ }
+}
+setInterval(() => { if (document.getElementById('dashboard').classList.contains('active')) refreshDashboard(); }, 3000);
+</script>
+</body>
+</html>

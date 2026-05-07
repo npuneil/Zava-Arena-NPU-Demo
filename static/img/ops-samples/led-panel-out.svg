@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" width="320" height="200">
+  <defs>
+    <radialGradient id="dome3" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#181838"/>
+      <stop offset="100%" stop-color="#06060d"/>
+    </radialGradient>
+  </defs>
+  <rect width="320" height="200" fill="url(#dome3)"/>
+  <!-- LED grid (arena main wall) -->
+  <g>
+    <rect x="20" y="40" width="280" height="100" fill="#0d0d1a" stroke="#00e5ff" stroke-width="1" opacity=".7"/>
+    <!-- working tiles -->
+    <g>
+      <rect x="22" y="42" width="34" height="22" fill="#00e5ff" opacity=".55"/>
+      <rect x="58" y="42" width="34" height="22" fill="#ff00c8" opacity=".55"/>
+      <rect x="94" y="42" width="34" height="22" fill="#8a2be2" opacity=".55"/>
+      <rect x="166" y="42" width="34" height="22" fill="#00e5ff" opacity=".55"/>
+      <rect x="202" y="42" width="34" height="22" fill="#ff00c8" opacity=".55"/>
+      <rect x="238" y="42" width="34" height="22" fill="#8a2be2" opacity=".55"/>
+      <rect x="22" y="66" width="34" height="22" fill="#ff00c8" opacity=".55"/>
+      <rect x="58" y="66" width="34" height="22" fill="#00e5ff" opacity=".55"/>
+      <rect x="94" y="66" width="34" height="22" fill="#ff00c8" opacity=".55"/>
+      <rect x="202" y="66" width="34" height="22" fill="#00e5ff" opacity=".55"/>
+      <rect x="238" y="66" width="34" height="22" fill="#ff00c8" opacity=".55"/>
+      <rect x="22" y="90" width="34" height="22" fill="#8a2be2" opacity=".55"/>
+      <rect x="58" y="90" width="34" height="22" fill="#00e5ff" opacity=".55"/>
+      <rect x="94" y="90" width="34" height="22" fill="#ff00c8" opacity=".55"/>
+      <rect x="166" y="90" width="34" height="22" fill="#8a2be2" opacity=".55"/>
+      <rect x="202" y="90" width="34" height="22" fill="#00e5ff" opacity=".55"/>
+      <rect x="238" y="90" width="34" height="22" fill="#ff00c8" opacity=".55"/>
+      <rect x="22" y="114" width="34" height="22" fill="#00e5ff" opacity=".55"/>
+      <rect x="58" y="114" width="34" height="22" fill="#ff00c8" opacity=".55"/>
+      <rect x="94" y="114" width="34" height="22" fill="#8a2be2" opacity=".55"/>
+      <rect x="166" y="114" width="34" height="22" fill="#ff00c8" opacity=".55"/>
+      <rect x="202" y="114" width="34" height="22" fill="#8a2be2" opacity=".55"/>
+      <rect x="238" y="114" width="34" height="22" fill="#00e5ff" opacity=".55"/>
+    </g>
+    <!-- failed quadrant -->
+    <rect x="130" y="42" width="34" height="22" fill="#1a0008" stroke="#ff4d6d" stroke-width="1.5"/>
+    <rect x="130" y="66" width="34" height="22" fill="#1a0008" stroke="#ff4d6d" stroke-width="1.5"/>
+    <rect x="130" y="90" width="34" height="22" fill="#1a0008" stroke="#ff4d6d" stroke-width="1.5"/>
+    <rect x="130" y="114" width="34" height="22" fill="#1a0008" stroke="#ff4d6d" stroke-width="1.5"/>
+    <text x="147" y="92" text-anchor="middle" fill="#ff4d6d" font-family="Segoe UI" font-size="14" font-weight="bold">×</text>
+  </g>
+  <text x="160" y="22" text-anchor="middle" fill="#00e5ff" font-family="Segoe UI" font-size="9" opacity=".7">ARENA LED · ZONE 7 · TILES 312–319</text>
+  <!-- console light -->
+  <rect x="80" y="160" width="160" height="20" fill="#0d0d1a" stroke="#2a2a4a"/>
+  <circle cx="100" cy="170" r="3" fill="#ff4d6d">
+    <animate attributeName="opacity" values="1;.2;1" dur=".8s" repeatCount="indefinite"/>
+  </circle>
+  <text x="160" y="174" text-anchor="middle" fill="#ff4d6d" font-family="Segoe UI" font-size="8" font-weight="bold">SIGNAL LOSS · TILES 312–319</text>
+  <text x="160" y="195" text-anchor="middle" fill="#ffb84d" font-family="Segoe UI" font-size="9" font-weight="bold">🔧  EQUIPMENT · DOORS IN 35 MIN</text>
+</svg>
