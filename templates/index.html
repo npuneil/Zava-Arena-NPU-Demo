@@ -487,12 +487,12 @@
 <!-- =================== HOME =================== -->
 <section class="page active" id="home">
   <div class="hero">
-    <h2>AI that scales to 17,600 fans — without leaving the building.</h2>
+    <h2>AI that scales to 18,000 fans — without leaving the building.</h2>
     <p>Every persona at Zava Arena — from the fan in row Z to the front-of-house engineer — gets a private, low-latency AI assistant running entirely on Copilot+ PC NPUs. No cloud round-trips. No data exfil. Sub-second answers for the millions of micro-interactions a live event generates.</p>
   </div>
 
   <div class="stats">
-    <div class="stat"><div class="num">17,600</div><div class="lbl">Seats per show</div></div>
+    <div class="stat"><div class="num">18,000</div><div class="lbl">Seats per show</div></div>
     <div class="stat"><div class="num">6</div><div class="lbl">Personas powered</div></div>
     <div class="stat"><div class="num">12</div><div class="lbl">Caption languages</div></div>
     <div class="stat"><div class="num">100%</div><div class="lbl">On-device inference</div></div>
@@ -503,7 +503,7 @@
     <div class="feature-card">
       <div class="icon">🎟️</div>
       <h3>Concertgoer Concierge</h3>
-      <p>Wayfinding, set lists, accessibility services, food, rideshare zones. Runs on the kiosk NPU — every fan question answered in &lt;1 second, even when 17K phones overload the cell network.</p>
+      <p>Wayfinding, set lists, accessibility services, food, rideshare zones. Runs on the kiosk NPU — every fan question answered in &lt;1 second, even when 18K phones overload the cell network.</p>
     </div>
     <div class="feature-card">
       <div class="icon">🌐</div>
@@ -533,7 +533,7 @@
     <div class="feature-card">
       <div class="icon">⚡</div>
       <h3>Works in Airplane Mode</h3>
-      <p>Disconnect your network. Everything still works. A packed arena means cell coverage collapses to zero — your AI shouldn't depend on a tower that just got drowned by 17,600 phones.</p>
+      <p>Disconnect your network. Everything still works. A packed arena means cell coverage collapses to zero — your AI shouldn't depend on a tower that just got drowned by 18,000 phones.</p>
     </div>
     <div class="feature-card">
       <div class="icon">📊</div>
@@ -554,7 +554,7 @@
       <div class="chip" onclick="ask('concierge', 'I have a hearing aid — what accessibility services does Zava Arena offer tonight?')">♿ Accessibility</div>
       <div class="chip" onclick="ask('concierge', 'What food is available inside the venue and what are the wait times like?')">🍔 Food options</div>
       <div class="chip" onclick="ask('concierge', 'Where do I get picked up by my rideshare after the show?')">🚗 Rideshare pickup</div>
-      <div class="chip" onclick="ask('concierge', 'Tell me about the resident headliner at Zava Arena — what makes their show special?')">🎵 Show trivia</div>
+      <div class="chip" onclick="ask('concierge', &quot;Tell me about tonight's headliner at Zava Arena — what makes their show special?&quot;)">🎵 Show trivia</div>
     </div>
     <div class="chat-box" id="chat-concierge"></div>
     <div class="chat-input">
@@ -573,7 +573,7 @@
     <div class="quick-prompts">
       <div class="chip" onclick="ask('performer', 'Give me a 5-minute vocal warmup before a 90-minute set — I sing alto rock.')">🎶 5-min warmup</div>
       <div class="chip" onclick="ask('performer', 'How should I sequence my setlist for an energy arc that peaks at song 9 of 14?')">📈 Setlist arc</div>
-      <div class="chip" onclick="ask('performer', 'What are some between-song banter ideas that work in a 17K-seat immersive venue?')">🎙️ Banter ideas</div>
+      <div class="chip" onclick="ask('performer', 'What are some between-song banter ideas that work in a 18K-seat venue?')">🎙️ Banter ideas</div>
       <div class="chip" onclick="ask('performer', 'How do I use the main LED wall to enhance a slow ballad without overwhelming it?')">🌌 Use the LED wall</div>
       <div class="chip" onclick="ask('performer', 'My in-ears feel tinny tonight — what should I check before I go on?')">🎧 In-ear triage</div>
     </div>
@@ -594,7 +594,7 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
       <div style="display:flex;flex-direction:column;gap:.5rem">
         <div style="color:var(--text-dim);font-size:.85rem;letter-spacing:.05em;text-transform:uppercase">Source line (English)</div>
-        <button class="btn" id="cap-voice-btn" type="button" style="background:rgba(0,229,255,.1);border:1px solid var(--border-strong);color:var(--cyan)">🎤 Hold to dictate</button>
+        <button class="btn voice-btn" id="cap-voice-btn" type="button" style="background:rgba(0,229,255,.1);border:1px solid var(--border-strong);color:var(--cyan)">🎤 Start dictation</button>
         <div id="cap-voice-status" style="font-size:.8rem;color:var(--text-dim);min-height:1.1rem"></div>
       </div>
       <div style="display:flex;flex-direction:column;gap:.5rem">
@@ -644,9 +644,9 @@
       </label>
       <div style="display:flex;flex-direction:column;gap:.5rem">
         <div style="color:var(--text-dim);font-size:.85rem;letter-spacing:.05em;text-transform:uppercase">Voice notes</div>
-        <button class="btn" id="ops-voice-btn" type="button" style="background:rgba(0,229,255,.1);border:1px solid var(--border-strong);color:var(--cyan)">🎤 Hold to dictate</button>
+        <button class="btn voice-btn" id="ops-voice-btn" type="button" style="background:rgba(0,229,255,.1);border:1px solid var(--border-strong);color:var(--cyan)">🎤 Start dictation</button>
         <div id="ops-voice-status" style="font-size:.8rem;color:var(--text-dim);min-height:1.1rem"></div>
-        <div style="font-size:.75rem;color:var(--text-dim);line-height:1.4">Uses Windows on-device speech recognition. Audio never leaves your machine.</div>
+        <div style="font-size:.75rem;color:var(--text-dim);line-height:1.4">Click to start/stop. Speech is captured in your browser; the resulting text is sent to the local NPU for analysis.</div>
       </div>
     </div>
 
@@ -684,7 +684,7 @@ Example: 'Fan in section 312 reports feeling unwell during pre-show. Visible dis
       </div>
       <div style="display:flex;flex-direction:column;gap:.5rem">
         <div style="color:var(--text-dim);font-size:.85rem;letter-spacing:.05em;text-transform:uppercase">Voice memo</div>
-        <button class="btn" id="ho-voice-btn" type="button" style="background:rgba(0,229,255,.1);border:1px solid var(--border-strong);color:var(--cyan)">🎤 Hold to dictate</button>
+        <button class="btn voice-btn" id="ho-voice-btn" type="button" style="background:rgba(0,229,255,.1);border:1px solid var(--border-strong);color:var(--cyan)">🎤 Start dictation</button>
         <div id="ho-voice-status" style="font-size:.8rem;color:var(--text-dim);min-height:1.1rem"></div>
       </div>
     </div>
@@ -723,6 +723,12 @@ Example: 'Fan in section 312 reports feeling unwell during pre-show. Visible dis
 
     <!-- Text -->
     <div id="det-text" class="det-pane">
+      <div class="quick-prompts" style="margin-bottom:.75rem">
+        <div class="chip" onclick="loadDetText('ai-press-release')">🤖 AI press release</div>
+        <div class="chip" onclick="loadDetText('scam-ticket')">🎫 Scam-ticket email</div>
+        <div class="chip" onclick="loadDetText('genuine-fan')">👤 Real fan post</div>
+        <div class="chip" onclick="loadDetText('ai-review')">✍️ AI concert review</div>
+      </div>
       <textarea class="doc" id="det-text-input" placeholder="Paste text — a press release, social caption, scalper email, anything…"></textarea>
       <button class="btn" style="margin-top:.75rem" onclick="detectText()">Analyze on NPU</button>
     </div>
@@ -735,6 +741,10 @@ Example: 'Fan in section 312 reports feeling unwell during pre-show. Visible dis
         <div>Click or drop an image</div>
         <div style="color:var(--text-dim);font-size:.85rem;margin-top:.25rem">Stays on this device</div>
       </label>
+      <div style="margin-top:.6rem;font-size:.8rem;color:var(--text-dim);line-height:1.5">
+        <strong style="color:var(--cyan)">Try:</strong> a photo from your phone (likely real) vs. an image generated by DALL·E / Midjourney / Stable Diffusion (likely AI).
+        Sample test images live in <code>static/img/ops-samples/</code>.
+      </div>
       <div id="det-image-name" style="margin-top:.75rem;color:var(--text-dim);font-size:.85rem"></div>
       <button class="btn" style="margin-top:.75rem" onclick="detectImage()">Analyze on NPU</button>
     </div>
@@ -747,6 +757,9 @@ Example: 'Fan in section 312 reports feeling unwell during pre-show. Visible dis
         <div>Click or drop a video clip</div>
         <div style="color:var(--text-dim);font-size:.85rem;margin-top:.25rem">Frame-by-frame analysis · stays local</div>
       </label>
+      <div style="margin-top:.6rem;font-size:.8rem;color:var(--text-dim);line-height:1.5">
+        <strong style="color:var(--cyan)">Try:</strong> a 5–15 second MP4 of a real concert clip vs. an AI-generated clip from Sora / Runway / Pika. Keep clips short for fast NPU analysis.
+      </div>
       <div id="det-video-name" style="margin-top:.75rem;color:var(--text-dim);font-size:.85rem"></div>
       <button class="btn" style="margin-top:.75rem" onclick="detectVideo()">Analyze on NPU</button>
     </div>
@@ -1013,8 +1026,8 @@ document.getElementById('ops-image-file').addEventListener('change', async (e) =
   }
 });
 
-// ---- Voice dictation (on-device via Windows Web Speech API) ----
-function wireVoice(btnId, statusId, targetId) {
+// ---- Voice dictation (click to toggle, with mic permission pre-flight) ----
+async function wireVoice(btnId, statusId, targetId) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const btn = document.getElementById(btnId);
   const status = document.getElementById(statusId);
@@ -1022,49 +1035,136 @@ function wireVoice(btnId, statusId, targetId) {
   if (!SR) {
     btn.disabled = true;
     btn.textContent = '🎤 Voice not supported';
-    if (status) status.textContent = 'Open in Edge or Chrome on Windows for on-device speech.';
+    if (status) status.textContent = 'Open in Edge or Chrome on Windows for browser speech.';
     return;
   }
-  const recog = new SR();
-  recog.continuous = true;
-  recog.interimResults = true;
-  recog.lang = 'en-US';
-  let active = false;
-  let baseText = '';
-  recog.onresult = (ev) => {
-    let interim = '', final = '';
-    for (let i = ev.resultIndex; i < ev.results.length; i++) {
-      const r = ev.results[i];
-      if (r.isFinal) final += r[0].transcript;
-      else interim += r[0].transcript;
-    }
-    if (final) baseText = (baseText + ' ' + final).trim();
-    const ta = document.getElementById(targetId);
-    if (ta) ta.value = (baseText + (interim ? ' ' + interim : '')).trim();
+
+  const setIdle = () => {
+    btn.classList.remove('recording');
+    btn.textContent = '🎤 Start dictation';
   };
-  recog.onerror = (e) => { if (status) status.textContent = '⚠ ' + (e.error || 'speech error'); stopV(); };
-  recog.onend = () => { if (active) { try { recog.start(); } catch(_){} } };
-  const startV = () => {
+  const setActive = () => {
+    btn.classList.add('recording');
+    btn.textContent = '⏹  Stop dictation';
+  };
+  const setStatus = (msg, isErr = false) => {
+    if (!status) return;
+    status.textContent = msg || '';
+    status.style.color = isErr ? 'var(--warn, #ff9966)' : 'var(--text-dim)';
+  };
+
+  let recog = null;
+  let userActive = false;
+  let baseText = '';
+  let permissionAsked = false;
+
+  const ensureMicPermission = async () => {
+    if (permissionAsked) return true;
+    permissionAsked = true;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return true;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(t => t.stop());
+      return true;
+    } catch (err) {
+      setStatus('⚠ Microphone permission denied. Allow mic access in your browser address bar and try again.', true);
+      return false;
+    }
+  };
+
+  const buildRecog = () => {
+    const r = new SR();
+    r.continuous = true;
+    r.interimResults = true;
+    r.lang = 'en-US';
+    r.onresult = (ev) => {
+      let interim = '', final = '';
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        const res = ev.results[i];
+        if (res.isFinal) final += res[0].transcript;
+        else interim += res[0].transcript;
+      }
+      if (final) baseText = (baseText + ' ' + final).trim();
+      const ta = document.getElementById(targetId);
+      if (ta) ta.value = (baseText + (interim ? ' ' + interim : '')).trim();
+    };
+    r.onerror = (e) => {
+      const code = e.error || 'unknown';
+      const friendly = {
+        'not-allowed': 'Microphone permission denied. Allow access and click again.',
+        'service-not-allowed': 'Speech service blocked. Allow microphone in browser settings.',
+        'no-speech': 'No speech detected — try speaking louder or closer to the mic.',
+        'audio-capture': 'No microphone found on this device.',
+        'network': 'Speech recognition needs network (browser uses cloud STT). Check connection.',
+        'aborted': ''
+      }[code] || ('Speech error: ' + code);
+      if (friendly) setStatus('⚠ ' + friendly, true);
+      if (code === 'not-allowed' || code === 'service-not-allowed' || code === 'audio-capture') {
+        userActive = false;
+        setIdle();
+      }
+    };
+    r.onend = () => {
+      if (userActive) {
+        try { r.start(); } catch (_) { /* will land back here */ }
+      } else {
+        setIdle();
+      }
+    };
+    return r;
+  };
+
+  const start = async () => {
+    if (userActive) return;
+    const ok = await ensureMicPermission();
+    if (!ok) return;
     const ta = document.getElementById(targetId);
     baseText = ta ? ta.value.trim() : '';
-    active = true;
-    btn.classList.add('recording');
-    btn.textContent = '🔴 Listening — release to stop';
-    if (status) status.textContent = 'On-device speech recognition active.';
-    try { recog.start(); } catch(_) {}
+    userActive = true;
+    setActive();
+    setStatus('🔴 Listening — click again to stop.');
+    recog = buildRecog();
+    try { recog.start(); }
+    catch (err) {
+      userActive = false;
+      setIdle();
+      setStatus('⚠ Could not start: ' + (err && err.message ? err.message : err), true);
+    }
   };
-  const stopV = () => {
-    active = false;
-    btn.classList.remove('recording');
-    btn.textContent = '🎤 Hold to dictate';
-    if (status) status.textContent = '';
-    try { recog.stop(); } catch(_) {}
+
+  const stop = () => {
+    userActive = false;
+    setStatus('');
+    setIdle();
+    if (recog) { try { recog.stop(); } catch (_) {} }
   };
-  btn.addEventListener('mousedown', startV);
-  btn.addEventListener('mouseup', stopV);
-  btn.addEventListener('mouseleave', () => { if (active) stopV(); });
-  btn.addEventListener('touchstart', (e) => { e.preventDefault(); startV(); });
-  btn.addEventListener('touchend', (e) => { e.preventDefault(); stopV(); });
+
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (userActive) stop(); else start();
+  });
+}
+
+// ---- Detector examples ----
+const DET_TEXT_SAMPLES = {
+  'ai-press-release':
+    "We are thrilled to announce that Zava Arena will host an unprecedented residency featuring the most innovative artists of our generation. " +
+    "This groundbreaking partnership leverages cutting-edge technology to deliver a truly immersive experience that will revolutionize the live entertainment landscape. " +
+    "Stakeholders across the ecosystem are excited to embark on this transformative journey together.",
+  'scam-ticket':
+    "URGENT: Your ticket order #ZA-44219 is on hold. To prevent cancellation, verify your billing immediately at zava-arena-tickets-secure.com/verify. " +
+    "Reply YES with the last 4 of your card to release seats. This message is automated — do not reply to the sender address. — Zava Arena Box Office",
+  'genuine-fan':
+    "ok so i finally made it to row Z lol view is rough but the sound is wild back here. waited 40 min for a pretzel, worth it. opener was tight, "+
+    "hoping they pull out the deep cut tonight 🤞",
+  'ai-review':
+    "The performance was nothing short of extraordinary, weaving together a tapestry of sonic landscapes that captivated the audience from start to finish. " +
+    "Each meticulously crafted moment resonated with profound emotional depth, leaving an indelible mark on all who were fortunate enough to bear witness."
+};
+function loadDetText(key) {
+  const ta = document.getElementById('det-text-input');
+  if (ta) ta.value = DET_TEXT_SAMPLES[key] || '';
+  document.getElementById('det-result').textContent = 'Sample loaded — click Analyze on NPU.';
 }
 
 renderOpsSamples();

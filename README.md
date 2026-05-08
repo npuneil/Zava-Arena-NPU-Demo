@@ -1,6 +1,6 @@
 # Zava Arena — On-Device AI for Live Events
 
-A Flask demo showcasing six on-device AI personas for a modern 17,600-seat
+A Flask demo showcasing six on-device AI personas for a modern 18,000-seat
 live-events arena. Everything runs locally on a Copilot+ PC NPU via
 **Microsoft Foundry Local** and **OpenVINO** — no cloud round-trips.
 
@@ -11,7 +11,7 @@ Snapdragon X / QNN runtime is also auto-detected.
 
 | Tab | Who it's for | Why on-device |
 |---|---|---|
-| **Concertgoer Concierge** | Fans / kiosks | Cell coverage collapses to zero when 17,600 phones hit one tower. The kiosk keeps working. |
+| **Concertgoer Concierge** | Fans / kiosks | Cell coverage collapses to zero when 18,000 phones hit one tower. The kiosk keeps working. |
 | **Performer Coach** | Touring artist on Surface | Vocal/setlist/crowd coaching that never leaves the dressing room. |
 | **Operations Playbook** | Venue staff (with photo + voice input) | Incident triage that never sends fan PII or scene photos off-prem. |
 | **Live Captions** | Accessibility + multilingual fans | Real-time English → 12 languages, all on-device. |
