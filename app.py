@@ -781,6 +781,97 @@ def api_upload_ops_image():
 
 
 # ---------------------------------------------------------------------------
+# On-device speech-to-text via faster-whisper (CTranslate2)
+# ---------------------------------------------------------------------------
+WHISPER_MODEL_NAME = os.environ.get("ZAVA_WHISPER_MODEL", "base.en")
+WHISPER_COMPUTE = os.environ.get("ZAVA_WHISPER_COMPUTE", "int8")
+_whisper_model = None
+_whisper_load_error = None
+
+
+def _get_whisper():
+    """Lazy-load the Whisper model on first use. Returns (model, error_str)."""
+    global _whisper_model, _whisper_load_error
+    if _whisper_model is not None:
+        return _whisper_model, None
+    if _whisper_load_error is not None:
+        return None, _whisper_load_error
+    try:
+        from faster_whisper import WhisperModel  # type: ignore
+        print(f"[WHISPER] Loading model '{WHISPER_MODEL_NAME}' ({WHISPER_COMPUTE}) — first call only…")
+        t0 = time.time()
+        _whisper_model = WhisperModel(WHISPER_MODEL_NAME, device="cpu", compute_type=WHISPER_COMPUTE)
+        print(f"[WHISPER] Loaded in {time.time()-t0:.1f}s")
+        return _whisper_model, None
+    except Exception as e:
+        _whisper_load_error = f"{type(e).__name__}: {e}"
+        traceback.print_exc()
+        return None, _whisper_load_error
+
+
+@app.route("/api/transcribe", methods=["POST"])
+def api_transcribe():
+    """Transcribe an audio blob with on-device Whisper. Audio never leaves this machine."""
+    if "audio" not in request.files:
+        return jsonify({"error": "No audio file provided"}), 400
+    f = request.files["audio"]
+    if not f or not f.filename:
+        return jsonify({"error": "Empty audio file"}), 400
+
+    model, err = _get_whisper()
+    if err:
+        return jsonify({
+            "error": (
+                "Whisper model failed to load. Install ffmpeg (winget install Gyan.FFmpeg) "
+                "and ensure faster-whisper is installed. Detail: " + err
+            )
+        }), 500
+
+    suffix = ".webm"
+    if "." in f.filename:
+        suffix = "." + f.filename.rsplit(".", 1)[-1].lower()
+    tmp_path = UPLOAD_DIR / f"_stt_{uuid.uuid4().hex[:10]}{suffix}"
+    try:
+        f.save(str(tmp_path))
+        t0 = time.time()
+        segments, info = model.transcribe(
+            str(tmp_path),
+            language=request.form.get("lang", "en"),
+            vad_filter=True,
+            beam_size=1,
+        )
+        text = " ".join(s.text.strip() for s in segments).strip()
+        dur_ms = int((time.time() - t0) * 1000)
+        return jsonify({
+            "text": text,
+            "language": info.language if info else None,
+            "latency_ms": dur_ms,
+            "model": WHISPER_MODEL_NAME,
+            "compute": WHISPER_COMPUTE,
+        })
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Transcription failed: {type(e).__name__}: {e}"}), 500
+    finally:
+        try:
+            tmp_path.unlink(missing_ok=True)
+        except Exception:
+            pass
+
+
+@app.route("/api/transcribe/status")
+def api_transcribe_status():
+    """Quick health check — does the Whisper model load on this machine?"""
+    model, err = _get_whisper()
+    return jsonify({
+        "ready": model is not None,
+        "model": WHISPER_MODEL_NAME,
+        "compute": WHISPER_COMPUTE,
+        "error": err,
+    })
+
+
+# ---------------------------------------------------------------------------
 # Real-time multilingual captions
 # ---------------------------------------------------------------------------
 SUPPORTED_CAPTION_LANGS = {

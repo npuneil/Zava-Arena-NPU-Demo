@@ -646,7 +646,7 @@
         <div style="color:var(--text-dim);font-size:.85rem;letter-spacing:.05em;text-transform:uppercase">Voice notes</div>
         <button class="btn voice-btn" id="ops-voice-btn" type="button" style="background:rgba(0,229,255,.1);border:1px solid var(--border-strong);color:var(--cyan)">🎤 Start dictation</button>
         <div id="ops-voice-status" style="font-size:.8rem;color:var(--text-dim);min-height:1.1rem"></div>
-        <div style="font-size:.75rem;color:var(--text-dim);line-height:1.4">Click to start/stop. Speech is captured in your browser; the resulting text is sent to the local NPU for analysis.</div>
+        <div style="font-size:.75rem;color:var(--text-dim);line-height:1.4">Click to record. Audio is transcribed by on-device <strong>Whisper</strong> — never leaves this machine.</div>
       </div>
     </div>
 
@@ -1026,117 +1026,100 @@ document.getElementById('ops-image-file').addEventListener('change', async (e) =
   }
 });
 
-// ---- Voice dictation (click to toggle, with mic permission pre-flight) ----
+// ---- Voice dictation (on-device Whisper via /api/transcribe) ----
 async function wireVoice(btnId, statusId, targetId) {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const btn = document.getElementById(btnId);
   const status = document.getElementById(statusId);
   if (!btn) return;
-  if (!SR) {
+
+  if (!navigator.mediaDevices || !window.MediaRecorder) {
     btn.disabled = true;
     btn.textContent = '🎤 Voice not supported';
-    if (status) status.textContent = 'Open in Edge or Chrome on Windows for browser speech.';
+    if (status) status.textContent = 'Browser does not support MediaRecorder.';
     return;
   }
 
-  const setIdle = () => {
-    btn.classList.remove('recording');
-    btn.textContent = '🎤 Start dictation';
-  };
-  const setActive = () => {
-    btn.classList.add('recording');
-    btn.textContent = '⏹  Stop dictation';
-  };
+  const setIdle = () => { btn.classList.remove('recording'); btn.textContent = '🎤 Start dictation'; };
+  const setRecording = () => { btn.classList.add('recording'); btn.textContent = '⏹  Stop & transcribe'; };
+  const setBusy = () => { btn.classList.remove('recording'); btn.textContent = '⏳ Transcribing on-device…'; btn.disabled = true; };
   const setStatus = (msg, isErr = false) => {
     if (!status) return;
     status.textContent = msg || '';
     status.style.color = isErr ? 'var(--warn, #ff9966)' : 'var(--text-dim)';
   };
 
-  let recog = null;
+  let mediaRecorder = null;
+  let chunks = [];
+  let stream = null;
   let userActive = false;
-  let baseText = '';
-  let permissionAsked = false;
 
-  const ensureMicPermission = async () => {
-    if (permissionAsked) return true;
-    permissionAsked = true;
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return true;
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach(t => t.stop());
-      return true;
-    } catch (err) {
-      setStatus('⚠ Microphone permission denied. Allow mic access in your browser address bar and try again.', true);
-      return false;
-    }
-  };
-
-  const buildRecog = () => {
-    const r = new SR();
-    r.continuous = true;
-    r.interimResults = true;
-    r.lang = 'en-US';
-    r.onresult = (ev) => {
-      let interim = '', final = '';
-      for (let i = ev.resultIndex; i < ev.results.length; i++) {
-        const res = ev.results[i];
-        if (res.isFinal) final += res[0].transcript;
-        else interim += res[0].transcript;
-      }
-      if (final) baseText = (baseText + ' ' + final).trim();
-      const ta = document.getElementById(targetId);
-      if (ta) ta.value = (baseText + (interim ? ' ' + interim : '')).trim();
-    };
-    r.onerror = (e) => {
-      const code = e.error || 'unknown';
-      const friendly = {
-        'not-allowed': 'Microphone permission denied. Allow access and click again.',
-        'service-not-allowed': 'Speech service blocked. Allow microphone in browser settings.',
-        'no-speech': 'No speech detected — try speaking louder or closer to the mic.',
-        'audio-capture': 'No microphone found on this device.',
-        'network': 'Speech recognition needs network (browser uses cloud STT). Check connection.',
-        'aborted': ''
-      }[code] || ('Speech error: ' + code);
-      if (friendly) setStatus('⚠ ' + friendly, true);
-      if (code === 'not-allowed' || code === 'service-not-allowed' || code === 'audio-capture') {
-        userActive = false;
-        setIdle();
-      }
-    };
-    r.onend = () => {
-      if (userActive) {
-        try { r.start(); } catch (_) { /* will land back here */ }
-      } else {
-        setIdle();
-      }
-    };
-    return r;
+  const stopTracks = () => {
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
   };
 
   const start = async () => {
     if (userActive) return;
-    const ok = await ensureMicPermission();
-    if (!ok) return;
-    const ta = document.getElementById(targetId);
-    baseText = ta ? ta.value.trim() : '';
-    userActive = true;
-    setActive();
-    setStatus('🔴 Listening — click again to stop.');
-    recog = buildRecog();
-    try { recog.start(); }
-    catch (err) {
-      userActive = false;
-      setIdle();
-      setStatus('⚠ Could not start: ' + (err && err.message ? err.message : err), true);
+    setStatus('Requesting microphone…');
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err) {
+      setStatus('⚠ Microphone permission denied. Allow access in your browser address bar.', true);
+      return;
     }
+    let mime = 'audio/webm;codecs=opus';
+    if (!MediaRecorder.isTypeSupported(mime)) {
+      mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm'
+           : (MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : '');
+    }
+    try {
+      mediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream);
+    } catch (err) {
+      stopTracks();
+      setStatus('⚠ Could not start recorder: ' + err.message, true);
+      return;
+    }
+    chunks = [];
+    mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    mediaRecorder.onstop = async () => {
+      stopTracks();
+      const blob = new Blob(chunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+      chunks = [];
+      if (!blob.size) { setIdle(); btn.disabled = false; setStatus('⚠ No audio captured.', true); return; }
+      setBusy();
+      setStatus(`⚡ Transcribing ${(blob.size/1024).toFixed(0)} KB on-device with Whisper…`);
+      const fd = new FormData();
+      const ext = (mediaRecorder.mimeType || '').includes('mp4') ? 'mp4' : 'webm';
+      fd.append('audio', blob, 'dictation.' + ext);
+      try {
+        const r = await fetch('/api/transcribe', { method: 'POST', body: fd });
+        const d = await r.json();
+        if (d.error) { setStatus('⚠ ' + d.error, true); }
+        else {
+          const ta = document.getElementById(targetId);
+          if (ta) {
+            const sep = (ta.value && !ta.value.endsWith(' ')) ? ' ' : '';
+            ta.value = (ta.value + sep + (d.text || '')).trim();
+          }
+          setStatus(`✓ Whisper (${d.model || 'base.en'}) · ${d.latency_ms || 0} ms · on-device`);
+        }
+      } catch (err) {
+        setStatus('⚠ Transcription request failed: ' + err.message, true);
+      } finally {
+        setIdle();
+        btn.disabled = false;
+      }
+    };
+    mediaRecorder.start();
+    userActive = true;
+    setRecording();
+    setStatus('🔴 Recording — click to stop & transcribe.');
   };
 
   const stop = () => {
+    if (!userActive) return;
     userActive = false;
-    setStatus('');
-    setIdle();
-    if (recog) { try { recog.stop(); } catch (_) {} }
+    try { mediaRecorder && mediaRecorder.state !== 'inactive' && mediaRecorder.stop(); }
+    catch (err) { stopTracks(); setIdle(); setStatus('⚠ Stop failed: ' + err.message, true); }
   };
 
   btn.addEventListener('click', (e) => {
